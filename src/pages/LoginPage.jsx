@@ -4,7 +4,7 @@ function LoginPage() {
     console.log('LoginPage')
     return (
         <div>
-            <h1>Login dn</h1>
+            <h1>Login</h1>
         </div>
     )
 }
