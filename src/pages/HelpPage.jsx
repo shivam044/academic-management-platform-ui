@@ -1,11 +1,11 @@
 import React from "react";
 
-function GradesPage() { 
+function HelpPage() {
     return (
         <div>
-            <h1>Gardes</h1>
+            <h1>Help</h1>
         </div>
     )
 }
 
-export default GradesPage;
+export default HelpPage;
