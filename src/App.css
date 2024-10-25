@@ -1,3 +1,5 @@
+/* App.css */
+
 .app-body {
   display: grid;
   grid-template-columns: 150px 1fr;
@@ -11,14 +13,34 @@
 
 .main-container {
   border-top-left-radius: 30px;
+  padding: 20px;
 }
 
+/* Login page styling */
+.login-page {
+  background-color: #f0f2f5;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* Optional styling for MUI Paper component in login page */
+.login-page .MuiPaper-root {
+  max-width: 400px;
+  padding: 2rem;
+  text-align: center;
+  border-radius: 8px;
+}
+
+/* Responsive layout adjustments */
 @media screen and (max-width: 720px) {
   .app-body {
     display: block;
   }
 
   .main-container {
-    padding: 20px!important;
+    padding: 20px !important;
   }
 }
