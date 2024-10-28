@@ -56,7 +56,7 @@ function LoginPage() {
           >
             Login
           </Button>
-        </Box>
+        </Box>  
       </Paper>
     </Container>
   );
