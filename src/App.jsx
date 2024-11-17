@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
+import LoginForm from "./components/Auth/LoginForm"
+import SignupPage from "./components/Auth/SignupForm";
 import DashboardPage from "./pages/DashboardPage";
 import ProfilePage from "./pages/ProfilePage";
 import GradesPage from "./pages/GradeTrackingPage";
@@ -16,7 +18,7 @@ import "./App.css";
 // Layout wrapper to control Topbar and Sidebar visibility based on the route
 function Layout({ children }) {
   const location = useLocation();
-  const isLoginPage = location.pathname === "/";
+  const isLoginPage = location.pathname === "/" || location.pathname === "/signup";
 
   return (
     <div className="app-body">
@@ -44,7 +46,8 @@ function App() {
     <Router>
       <Layout>
         <Routes>
-          <Route path="/" element={<LoginPage />} />
+          <Route path="/" element={<LoginForm />} />
+          <Route path="/signup" element={<SignupPage/>} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/grades" element={<GradesPage />} />
           <Route path="/profile" element={<ProfilePage />} />

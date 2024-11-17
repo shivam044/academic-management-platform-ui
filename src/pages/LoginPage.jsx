@@ -1,7 +1,43 @@
-import React from "react";
-import { Box, Button, TextField, Typography, Container, Paper } from "@mui/material";
+import React, { useState } from "react";
+import axios from "axios";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Container,
+  Paper,
+} from "@mui/material";
 
 function LoginPage() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      const response = await axios.post("https://your-api-url.com/login", {
+        username,
+        password
+      });
+
+
+      // if (!response.ok) {
+      //   throw new Error("Login failed");
+      // }
+
+      const data = await response.json();
+      console.log("Login successful:", data);
+      // Handle successful login, such as saving a token or redirecting
+    } catch (error) {
+      setError(error.message);
+      console.error("Error:", error);
+    }
+  };
+
   return (
     <Container
       maxWidth="xs"
@@ -35,18 +71,23 @@ function LoginPage() {
             gap: 2,
             marginTop: 2,
           }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            console.log("Form Submitted");
-          }}
+          onSubmit={handleSubmit}
         >
-          <TextField label="Username" variant="outlined" fullWidth required />
+          <TextField
+            label="Username"
+            variant="outlined"
+            fullWidth
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required />
           <TextField
             label="Password"
             type="password"
             variant="outlined"
             fullWidth
             required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
           <Button
             type="submit"
@@ -56,7 +97,7 @@ function LoginPage() {
           >
             Login
           </Button>
-        </Box>  
+        </Box>
       </Paper>
     </Container>
   );
