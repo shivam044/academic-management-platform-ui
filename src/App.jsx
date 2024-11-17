@@ -8,6 +8,11 @@ import GradesPage from "./pages/GradeTrackingPage";
 import SettingsPage from "./pages/SettingsPage";
 import HelpPage from "./pages/HelpPage";
 
+import CrudTestPage from "./pages/CrudTestPage";
+
+import Register from './components/Auth/Register'; // Import the Register component
+
+
 import Sidebar from "./components/Layouts/Sidebar";
 import Topbar from "./components/Layouts/Topbar";
 
@@ -34,6 +39,9 @@ function App() {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/help" element={<HelpPage />} />
+              <Route path="/register" element={<Register />} /> {/* Register Page */}
+
+              <Route path="/crudtestpage" element={<CrudTestPage />} />
             </Routes>
           </main>
         </div>
