@@ -8,30 +8,34 @@ import {
   Container,
   Paper,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 function LoginPage() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const backendUrl = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate(); // Initialize navigate
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
     try {
-      const response = await axios.post("https://your-api-url.com/login", {
-        username,
+      const response = await axios.post(`${backendUrl}/auth/signin`, {
+        email,
         password
       });
 
+      console.log("Login successful:", response);
 
-      // if (!response.ok) {
-      //   throw new Error("Login failed");
-      // }
+      //Extract token
+      const token = response?.data?.token;
+      localStorage.setItem("jwtToken", token);
 
-      const data = await response.json();
-      console.log("Login successful:", data);
-      // Handle successful login, such as saving a token or redirecting
+       // Navigate to the Dashboard after successful login
+       navigate("/dashboard");
+
     } catch (error) {
       setError(error.message);
       console.error("Error:", error);
@@ -74,11 +78,11 @@ function LoginPage() {
           onSubmit={handleSubmit}
         >
           <TextField
-            label="Username"
+            label="email"
             variant="outlined"
             fullWidth
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required />
           <TextField
             label="Password"

@@ -4,6 +4,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import EqualizerIcon from "@mui/icons-material/Equalizer";
 import SettingsIcon from "@mui/icons-material/Settings";
 import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks"; // Import for subjects
 
 import "./css/sidebar.css";
 
@@ -40,6 +41,18 @@ function Sidebar() {
                 <EqualizerIcon />
               </div>
               <div className="sidebar-link-text font-smaller">Grades</div>
+            </Link>
+
+            <Link
+              className={`sidebar-link d-flex flex-direction-col aic pad-1 link-deco-none font-color-200 ${
+                isActive("/subjects") ? "active" : ""
+              }`}
+              to="/subjects"
+            >
+              <div className="sidebar-link-icon">
+                <LibraryBooksIcon />
+              </div>
+              <div className="sidebar-link-text font-smaller">Subjects</div>
             </Link>
 
             <div className="pad-y-1"></div>

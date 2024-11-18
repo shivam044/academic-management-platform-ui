@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 
 import LoginPage from "./pages/LoginPage";
 import LoginForm from "./components/Auth/LoginForm"
+import SubjectsPage from "./pages/SubjectsPage";
 import SignupPage from "./components/Auth/SignupForm";
 import DashboardPage from "./pages/DashboardPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -12,6 +13,7 @@ import HelpPage from "./pages/HelpPage";
 
 import Sidebar from "./components/Layouts/Sidebar";
 import Topbar from "./components/Layouts/Topbar";
+import ProtectedRoute from "./hooks/useAuth";
 
 import "./App.css";
 
@@ -47,12 +49,50 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<LoginForm />} />
-          <Route path="/signup" element={<SignupPage/>} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/grades" element={<GradesPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/help" element={<HelpPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          
+          {/* Protect the routes by wrapping them in ProtectedRoute */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/grades"
+            element={
+              <ProtectedRoute>
+                <GradesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/subjects" element={<SubjectsPage />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <ProtectedRoute>
+                <HelpPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Layout>
     </Router>
