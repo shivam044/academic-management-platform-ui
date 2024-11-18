@@ -15,6 +15,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Snackbar,
+  Alert
 } from "@mui/material";
 import { Email as EmailIcon, School as SchoolIcon } from "@mui/icons-material";
 
@@ -43,9 +45,9 @@ function SubjectsPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [subjectData, setSubjectData] = useState({ subjectTitle: "", targetGrade: "" });
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const backendUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("jwtToken");
-//   console.log(token,'token')
 
   useEffect(() => {
     fetchUserSubjects();
@@ -63,9 +65,14 @@ function SubjectsPage() {
       setSubjects(response.data);
     } catch (error) {
       console.error("Error fetching subjects:", error);
+      showSnackbar("Failed to fetch subjects.", "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const showSnackbar = (message, severity) => {
+    setSnackbar({ open: true, message, severity });
   };
 
   const handleOpenDialog = (subject = null) => {
@@ -84,47 +91,49 @@ function SubjectsPage() {
     const { name, value } = e.target;
     setSubjectData((prevData) => ({ ...prevData, [name]: value }));
   };
-    
 
   const handleSaveSubject = async () => {
     const config = { headers: { Authorization: `Bearer ${token}` } };
-  
     try {
       const decodedToken = decodeToken(token);
       const userId = decodedToken?.userId;
-      
-      // Ensure the `uid` and `t_uid` fields are part of the subjectData
+
       const requestData = {
         ...subjectData,
-        uid: userId,  // Set the `uid` to the logged-in user's ID
-        t_uid: userId // Assuming `t_uid` is also the user ID for this example
+        uid: userId,
+        t_uid: userId,
       };
-  
+
       if (editMode) {
-        // Update subject
         await axios.put(`${backendUrl}/api/subjects/${subjectData._id}`, requestData, config);
+        showSnackbar("Subject updated successfully!", "success");
       } else {
-        // Create new subject
         await axios.post(`${backendUrl}/api/subject`, requestData, config);
+        showSnackbar("Subject added successfully!", "success");
       }
-  
       fetchUserSubjects(); // Refresh the list after saving
       handleCloseDialog();
     } catch (error) {
       console.error("Error saving subject:", error);
+      showSnackbar("Failed to save subject.", "error");
     }
   };
-    
+
   const deleteSubject = async (id) => {
     const config = { headers: { Authorization: `Bearer ${token}` } };
     try {
       await axios.delete(`${backendUrl}/api/subjects/${id}`, config);
+      showSnackbar("Subject deleted successfully!", "success");
       fetchUserSubjects(); // Refresh the list after deleting
     } catch (error) {
       console.error("Error deleting subject:", error);
+      showSnackbar("Failed to delete subject.", "error");
     }
   };
-  
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   if (loading) {
     return (
@@ -206,6 +215,18 @@ function SubjectsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: "100%" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
