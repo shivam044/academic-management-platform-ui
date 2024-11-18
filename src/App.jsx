@@ -6,8 +6,10 @@ import LoginForm from "./components/Auth/LoginForm"
 import SubjectsPage from "./pages/SubjectsPage";
 import SignupPage from "./components/Auth/SignupForm";
 import DashboardPage from "./pages/DashboardPage";
+import Dashboard from "./components/Dashboard/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import GradesPage from "./pages/GradeTrackingPage";
+import Grades from "./components/Grades/GradeList";
 import SettingsPage from "./pages/SettingsPage";
 import HelpPage from "./pages/HelpPage";
 
@@ -56,7 +58,7 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <Dashboard />
               </ProtectedRoute>
             }
           />
@@ -64,7 +66,7 @@ function App() {
             path="/grades"
             element={
               <ProtectedRoute>
-                <GradesPage />
+                <Grades />
               </ProtectedRoute>
             }
           />
