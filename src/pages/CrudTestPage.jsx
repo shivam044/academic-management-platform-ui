@@ -70,17 +70,21 @@ const CrudTestingPage = () => {
   const fetchAllData = async () => {
     try {
       const usersData = await getAllUsers();
-      setUsers(usersData);
+      setUsers(Array.isArray(usersData) ? usersData : []);
+      
       const gradesData = await getAllGrades();
-      setGrades(gradesData);
+      setGrades(Array.isArray(gradesData) ? gradesData : []);
+  
       const assignmentsData = await getAllAssignments();
-      setAssignments(assignmentsData);
+      setAssignments(Array.isArray(assignmentsData) ? assignmentsData : []);
+  
       const subjectsData = await getAllSubjects();
-      setSubjects(subjectsData);
+      setSubjects(Array.isArray(subjectsData) ? subjectsData : []);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
+  
 
   // Handle CRUD Actions
   const handleCreateUser = async () => {
