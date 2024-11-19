@@ -4,7 +4,7 @@ import { handleApiError } from './errorController';
 // Create a new user
 export const createUser = async (userData) => {
   try {
-    const response = await axiosInstance.post('/user', userData);
+    const response = await axiosInstance.post('/api/user', userData);
     return response.data;
   } catch (error) {
     handleApiError('Error creating user', error);
@@ -15,7 +15,7 @@ export const createUser = async (userData) => {
 // Get a user by ID
 export const getUserById = async (userId) => {
   try {
-    const response = await axiosInstance.get(`/users/${userId}`);
+    const response = await axiosInstance.get(`/api/users/${userId}`);
     return response.data;
   } catch (error) {
     handleApiError('Error getting user by ID', error);
@@ -26,7 +26,7 @@ export const getUserById = async (userId) => {
 // Update a user by ID
 export const updateUser = async (userId, userData) => {
   try {
-    const response = await axiosInstance.put(`/users/${userId}`, userData);
+    const response = await axiosInstance.put(`/api/users/${userId}`, userData);
     return response.data;
   } catch (error) {
     handleApiError('Error updating user', error);
@@ -37,7 +37,7 @@ export const updateUser = async (userId, userData) => {
 // Delete a user by ID
 export const deleteUser = async (userId) => {
   try {
-    const response = await axiosInstance.delete(`/users/${userId}`);
+    const response = await axiosInstance.delete(`/api/users/${userId}`);
     return response.data;
   } catch (error) {
     handleApiError('Error deleting user', error);
@@ -48,7 +48,7 @@ export const deleteUser = async (userId) => {
 // Get all users
 export const getAllUsers = async () => {
   try {
-    const response = await axiosInstance.get('/users');
+    const response = await axiosInstance.get('/api/users');
     return response.data;
   } catch (error) {
     handleApiError('Error getting all users', error);

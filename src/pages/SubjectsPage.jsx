@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import {
   Container,
   Typography,
@@ -16,28 +15,17 @@ import {
   DialogActions,
   TextField,
   Snackbar,
-  Alert
+  Alert,
 } from "@mui/material";
 import { Email as EmailIcon, School as SchoolIcon } from "@mui/icons-material";
+import decodeToken from "../helpers/decodeToken"; 
+import {
+  createSubject,
+  getSubjectsByUser,
+  updateSubject,
+  deleteSubject,
+} from "../api/subject";
 
-// Utility function to decode a JWT token without using jwt-decode
-const decodeToken = (token) => {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      window
-        .atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error("Invalid token format", error);
-    return null;
-  }
-};
 
 function SubjectsPage() {
   const [subjects, setSubjects] = useState([]);
@@ -46,8 +34,7 @@ function SubjectsPage() {
   const [editMode, setEditMode] = useState(false);
   const [subjectData, setSubjectData] = useState({ subjectTitle: "", targetGrade: "" });
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-  const backendUrl = import.meta.env.VITE_API_URL;
-  const token = localStorage.getItem("jwtToken");
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchUserSubjects();
@@ -56,13 +43,10 @@ function SubjectsPage() {
   const fetchUserSubjects = async () => {
     try {
       if (!token) throw new Error("No token found");
-
       const decodedToken = decodeToken(token);
       const userId = decodedToken?.userId;
-
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.get(`${backendUrl}/api/subjects/user/${userId}`, config);
-      setSubjects(response.data);
+      const subjects = await getSubjectsByUser(userId);
+      setSubjects(subjects);
     } catch (error) {
       console.error("Error fetching subjects:", error);
       showSnackbar("Failed to fetch subjects.", "error");
@@ -93,7 +77,6 @@ function SubjectsPage() {
   };
 
   const handleSaveSubject = async () => {
-    const config = { headers: { Authorization: `Bearer ${token}` } };
     try {
       const decodedToken = decodeToken(token);
       const userId = decodedToken?.userId;
@@ -105,10 +88,10 @@ function SubjectsPage() {
       };
 
       if (editMode) {
-        await axios.put(`${backendUrl}/api/subjects/${subjectData._id}`, requestData, config);
+        await updateSubject(subjectData._id, requestData);
         showSnackbar("Subject updated successfully!", "success");
       } else {
-        await axios.post(`${backendUrl}/api/subject`, requestData, config);
+        await createSubject(requestData);
         showSnackbar("Subject added successfully!", "success");
       }
       fetchUserSubjects(); // Refresh the list after saving
@@ -119,10 +102,9 @@ function SubjectsPage() {
     }
   };
 
-  const deleteSubject = async (id) => {
-    const config = { headers: { Authorization: `Bearer ${token}` } };
+  const handleDeleteSubject = async (id) => {
     try {
-      await axios.delete(`${backendUrl}/api/subjects/${id}`, config);
+      await deleteSubject(id);
       showSnackbar("Subject deleted successfully!", "success");
       fetchUserSubjects(); // Refresh the list after deleting
     } catch (error) {
@@ -175,7 +157,7 @@ function SubjectsPage() {
                 <Button size="small" color="primary" onClick={() => handleOpenDialog(subject)}>
                   Edit
                 </Button>
-                <Button size="small" color="secondary" onClick={() => deleteSubject(subject._id)}>
+                <Button size="small" color="secondary" onClick={() => handleDeleteSubject(subject._id)}>
                   Delete
                 </Button>
               </CardActions>

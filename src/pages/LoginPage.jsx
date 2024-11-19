@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 import {
   Box,
   Button,
@@ -9,35 +8,32 @@ import {
   Paper,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { signIn } from "../api/auth"; // Import the signIn method
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const backendUrl = import.meta.env.VITE_API_URL;
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    setError(""); // Reset the error state before making the request
 
     try {
-      const response = await axios.post(`${backendUrl}/auth/signin`, {
-        email,
-        password
-      });
+      // Call the signIn method with the user's credentials
+      const response = await signIn({ email, password });
 
-      console.log("Login successful:", response);
-
-      //Extract token
-      const token = response?.data?.token;
-      localStorage.setItem("jwtToken", token);
-
-       // Navigate to the Dashboard after successful login
-       navigate("/dashboard");
-
+      if (response?.token) {
+        console.log("Login successful:", response);
+        // Navigate to the Dashboard after successful login
+        navigate("/dashboard");
+      } else {
+        setError("Unexpected error occurred. Please try again.");
+      }
     } catch (error) {
-      setError(error.message);
+      // Display a more user-friendly error message
+      setError("Login failed. Please check your email and password.");
       console.error("Error:", error);
     }
   };
@@ -67,6 +63,11 @@ function LoginPage() {
         <Typography variant="h4" component="h1" gutterBottom>
           Login
         </Typography>
+        {error && (
+          <Typography color="error" variant="body2" sx={{ marginBottom: 2 }}>
+            {error}
+          </Typography>
+        )}
         <Box
           component="form"
           sx={{
@@ -78,12 +79,13 @@ function LoginPage() {
           onSubmit={handleSubmit}
         >
           <TextField
-            label="email"
+            label="Email"
             variant="outlined"
             fullWidth
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required />
+            required
+          />
           <TextField
             label="Password"
             type="password"

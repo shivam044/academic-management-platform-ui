@@ -55,6 +55,20 @@ function Sidebar() {
               <div className="sidebar-link-text font-smaller">Subjects</div>
             </Link>
 
+            
+            {/* Crud Test Page TEMP */}
+            <Link
+              className={`sidebar-link d-flex flex-direction-col aic pad-1 link-deco-none font-color-200 ${
+                isActive("/crudtestpage") ? "active" : ""
+              }`}
+              to="/crudtestpage"
+            >
+              <div className="sidebar-link-icon">
+                <LibraryBooksIcon />
+              </div>
+              <div className="sidebar-link-text font-smaller">Crud Test Page</div>
+            </Link>
+
             <div className="pad-y-1"></div>
 
             <Link

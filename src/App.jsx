@@ -48,7 +48,7 @@ function App() {
   const [count, setCount] = useState(0);
 
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Layout>
         <Routes>
           <Route path="/" element={<LoginForm />} />

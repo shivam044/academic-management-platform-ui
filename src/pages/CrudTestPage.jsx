@@ -26,7 +26,7 @@ import {
   updateSubject,
   deleteSubject,
   getAllSubjects,
-} from '../api/subjects';
+} from '../api/subject';
 
 function CrudTestingPage () {
   const [users, setUsers] = useState([]);
@@ -164,7 +164,7 @@ function CrudTestingPage () {
     <div>
       <h1>CRUD Testing Page</h1>
 
-      {/* <div>
+      <div>
         <h2>Users</h2>
         <form onSubmit={(e) => { e.preventDefault(); handleCreateUser(); }}>
           <input type="text" placeholder="Username" value={newUser.userName} onChange={(e) => setNewUser({ ...newUser, userName: e.target.value })} />
@@ -245,7 +245,7 @@ function CrudTestingPage () {
             <button onClick={() => handleDeleteSubject(subject._id)}>Delete Subject</button>
           </div>
         ))}
-      </div> */}
+      </div>
     </div>
   );
 }

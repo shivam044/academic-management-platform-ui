@@ -4,7 +4,7 @@ import { handleApiError } from './errorController';
 // Create a new assignment
 export const createAssignment = async (assignmentData) => {
   try {
-    const response = await axiosInstance.post('/assignment', assignmentData);
+    const response = await axiosInstance.post('/api/assignment', assignmentData);
     return response.data;
   } catch (error) {
     handleApiError('Error creating assignment', error);
@@ -15,7 +15,7 @@ export const createAssignment = async (assignmentData) => {
 // Get an assignment by ID
 export const getAssignmentById = async (assignmentId) => {
   try {
-    const response = await axiosInstance.get(`/assignments/${assignmentId}`);
+    const response = await axiosInstance.get(`/api/assignments/${assignmentId}`);
     return response.data;
   } catch (error) {
     handleApiError('Error getting assignment by ID', error);
@@ -26,7 +26,7 @@ export const getAssignmentById = async (assignmentId) => {
 // Update an assignment by ID
 export const updateAssignment = async (assignmentId, assignmentData) => {
   try {
-    const response = await axiosInstance.put(`/assignments/${assignmentId}`, assignmentData);
+    const response = await axiosInstance.put(`/api/assignments/${assignmentId}`, assignmentData);
     return response.data;
   } catch (error) {
     handleApiError('Error updating assignment', error);
@@ -37,7 +37,7 @@ export const updateAssignment = async (assignmentId, assignmentData) => {
 // Delete an assignment by ID
 export const deleteAssignment = async (assignmentId) => {
   try {
-    const response = await axiosInstance.delete(`/assignments/${assignmentId}`);
+    const response = await axiosInstance.delete(`/api/assignments/${assignmentId}`);
     return response.data;
   } catch (error) {
     handleApiError('Error deleting assignment', error);
@@ -48,7 +48,7 @@ export const deleteAssignment = async (assignmentId) => {
 // Get assignments by user ID
 export const getAssignmentsByUser = async (userId) => {
   try {
-    const response = await axiosInstance.get(`/assignments/user/${userId}`);
+    const response = await axiosInstance.get(`/api/assignments/user/${userId}`);
     return response.data;
   } catch (error) {
     handleApiError('Error getting assignments by user ID', error);
@@ -59,7 +59,7 @@ export const getAssignmentsByUser = async (userId) => {
 // Get all assignments
 export const getAllAssignments = async () => {
   try {
-    const response = await axiosInstance.get('/assignments');
+    const response = await axiosInstance.get('/api/assignments');
     return response.data;
   } catch (error) {
     handleApiError('Error getting all assignments', error);
