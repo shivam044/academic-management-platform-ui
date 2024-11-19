@@ -1,10 +1,15 @@
-import { React, useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
+import LoginForm from "./components/Auth/LoginForm"
+import SubjectsPage from "./pages/SubjectsPage";
+import SignupPage from "./components/Auth/SignupForm";
 import DashboardPage from "./pages/DashboardPage";
+import Dashboard from "./components/Dashboard/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import GradesPage from "./pages/GradeTrackingPage";
+import Grades from "./components/Grades/GradeList";
 import SettingsPage from "./pages/SettingsPage";
 import HelpPage from "./pages/HelpPage";
 
@@ -15,38 +20,89 @@ import Register from './components/Auth/Register'; // Import the Register compon
 
 import Sidebar from "./components/Layouts/Sidebar";
 import Topbar from "./components/Layouts/Topbar";
+import ProtectedRoute from "./hooks/useAuth";
 
 import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0);
+// Layout wrapper to control Topbar and Sidebar visibility based on the route
+function Layout({ children }) {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/" || location.pathname === "/signup";
 
   return (
-    <>
-      <Router>
-        <div className="app-body">
+    <div className="app-body">
+      {!isLoginPage && (
+        <>
           <div className="topbar-container">
             <Topbar />
           </div>
           <div className="sidebar-container">
             <Sidebar />
           </div>
-          <main className="main-container pad-y-2 pad-x-4">
-            <Routes>
-              <Route path="/" element={<LoginPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/grades" element={<GradesPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/help" element={<HelpPage />} />
-              <Route path="/register" element={<Register />} /> {/* Register Page */}
+        </>
+      )}
+      <main className={`main-container pad-y-2 pad-x-4 ${isLoginPage ? "login-page" : ""}`}>
+        {children}
+      </main>
+    </div>
+  );
+}
 
-              <Route path="/crudtestpage" element={<CrudTestPage />} />
-            </Routes>
-          </main>
-        </div>
-      </Router>
-    </>
+function App() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<LoginForm />} />
+          <Route path="/signup" element={<SignupPage />} />
+          
+          {/* Protect the routes by wrapping them in ProtectedRoute */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/grades"
+            element={
+              <ProtectedRoute>
+                <Grades />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/subjects" element={<SubjectsPage />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <ProtectedRoute>
+                <HelpPage />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Layout>
+    </Router>
   );
 }
 

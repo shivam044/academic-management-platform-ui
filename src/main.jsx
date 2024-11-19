@@ -6,7 +6,7 @@ import './styles/component-common.css'
 import './styles/global-common.css'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  // <StrictMode>
     <App />
-  </StrictMode>,
+  // </StrictMode>,
 )
