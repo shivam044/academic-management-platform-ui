@@ -16,6 +16,7 @@ import HelpPage from "./pages/HelpPage";
 import Sidebar from "./components/Layouts/Sidebar";
 import Topbar from "./components/Layouts/Topbar";
 import ProtectedRoute from "./hooks/useAuth";
+import CrudTestPage from "./pages/CrudTestPage";
 
 import "./App.css";
 
@@ -51,6 +52,7 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<LoginForm />} />
+          <Route path="/crudtestpage" element={<CrudTestPage />} />
           <Route path="/signup" element={<SignupPage />} />
           
           {/* Protect the routes by wrapping them in ProtectedRoute */}
