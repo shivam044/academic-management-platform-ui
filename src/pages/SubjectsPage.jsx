@@ -16,6 +16,10 @@ import {
   TextField,
   Snackbar,
   Alert,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
 } from "@mui/material";
 import { Email as EmailIcon, School as SchoolIcon } from "@mui/icons-material";
 import decodeToken from "../helpers/decodeToken"; 
@@ -25,19 +29,24 @@ import {
   updateSubject,
   deleteSubject,
 } from "../api/subject";
-
+import { getAllTeachers } from "../api/teacher";
+import { getAllSemesters } from "../api/semester";
 
 function SubjectsPage() {
   const [subjects, setSubjects] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [semesters, setSemesters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [subjectData, setSubjectData] = useState({ subjectTitle: "", targetGrade: "" });
+  const [subjectData, setSubjectData] = useState({ subjectTitle: "", targetGrade: "", room: "", semester_id: "", t_uid: "" });
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchUserSubjects();
+    fetchAllTeachers();
+    fetchAllSemesters();
   }, []);
 
   const fetchUserSubjects = async () => {
@@ -55,20 +64,38 @@ function SubjectsPage() {
     }
   };
 
+  const fetchAllTeachers = async () => {
+    try {
+      const teachers = await getAllTeachers();
+      setTeachers(teachers);
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+    }
+  };
+
+  const fetchAllSemesters = async () => {
+    try {
+      const semesters = await getAllSemesters();
+      setSemesters(semesters);
+    } catch (error) {
+      console.error("Error fetching semesters:", error);
+    }
+  };
+
   const showSnackbar = (message, severity) => {
     setSnackbar({ open: true, message, severity });
   };
 
   const handleOpenDialog = (subject = null) => {
     setEditMode(!!subject);
-    setSubjectData(subject || { subjectTitle: "", targetGrade: "" });
+    setSubjectData(subject || { subjectTitle: "", targetGrade: "", room: "", semester_id: "", t_uid: "" });
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditMode(false);
-    setSubjectData({ subjectTitle: "", targetGrade: "" });
+    setSubjectData({ subjectTitle: "", targetGrade: "", room: "", semester_id: "", t_uid: "" });
   };
 
   const handleInputChange = (e) => {
@@ -80,13 +107,15 @@ function SubjectsPage() {
     try {
       const decodedToken = decodeToken(token);
       const userId = decodedToken?.userId;
-
+  
+      // Construct the requestData with only IDs
       const requestData = {
         ...subjectData,
         uid: userId,
-        t_uid: userId,
+        t_uid: subjectData.t_uid, // Ensure this is an ID, not an object
+        semester_id: subjectData.semester_id, // Ensure this is an ID, not an object
       };
-
+  
       if (editMode) {
         await updateSubject(subjectData._id, requestData);
         showSnackbar("Subject updated successfully!", "success");
@@ -101,6 +130,8 @@ function SubjectsPage() {
       showSnackbar("Failed to save subject.", "error");
     }
   };
+  
+  
 
   const handleDeleteSubject = async (id) => {
     try {
@@ -146,11 +177,17 @@ function SubjectsPage() {
                   Target Grade: {subject.targetGrade}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  Teacher: {subject.t_uid.firstName} {subject.t_uid.lastName}
+                  Teacher: {subject.t_uid?.firstName} {subject.t_uid?.lastName}
                 </Typography>
                 <Typography variant="body2" color="textSecondary" sx={{ display: "flex", alignItems: "center", mt: 1 }}>
                   <EmailIcon sx={{ mr: 0.5 }} />
-                  {subject.t_uid.email}
+                  {subject.t_uid?.email}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Room: {subject.room}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Semester: {subject.semester_id?.title}
                 </Typography>
               </CardContent>
               <CardActions>
@@ -187,6 +224,43 @@ function SubjectsPage() {
             value={subjectData.targetGrade}
             onChange={handleInputChange}
           />
+          <TextField
+            margin="dense"
+            label="Room"
+            name="room"
+            fullWidth
+            value={subjectData.room}
+            onChange={handleInputChange}
+          />
+          <FormControl fullWidth margin="dense">
+          <InputLabel>Semester</InputLabel>
+          <Select
+            name="semester_id"
+            value={subjectData.semester_id} // This should be the ID
+            onChange={handleInputChange}
+          >
+            {semesters.map((semester) => (
+              <MenuItem key={semester._id} value={semester._id}>
+                {semester.title}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Teacher</InputLabel>
+          <Select
+            name="t_uid"
+            value={subjectData.t_uid} // This should be the ID
+            onChange={handleInputChange}
+          >
+            {teachers.map((teacher) => (
+              <MenuItem key={teacher._id} value={teacher._id}>
+                {teacher.first_name} {teacher.last_name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} color="secondary">

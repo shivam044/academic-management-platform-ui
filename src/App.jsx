@@ -17,6 +17,9 @@ import Sidebar from "./components/Layouts/Sidebar";
 import Topbar from "./components/Layouts/Topbar";
 import ProtectedRoute from "./hooks/useAuth";
 import CrudTestPage from "./pages/CrudTestPage";
+import TeachersPage from "./pages/TeachersPage";
+import SemestersPage from "./pages/SemestersPage";
+
 
 import "./App.css";
 
@@ -53,6 +56,8 @@ function App() {
         <Routes>
           <Route path="/" element={<LoginForm />} />
           <Route path="/crudtestpage" element={<CrudTestPage />} />
+          <Route path="/teachers" element={<TeachersPage />} />
+          <Route path="/semesters" element={<SemestersPage />} />
           <Route path="/signup" element={<SignupPage />} />
           
           {/* Protect the routes by wrapping them in ProtectedRoute */}
