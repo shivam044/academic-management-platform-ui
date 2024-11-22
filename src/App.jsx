@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
-import LoginPage from "./pages/LoginPage";
 import LoginForm from "./components/Auth/LoginForm"
 import SubjectsPage from "./pages/SubjectsPage";
 import SignupPage from "./components/Auth/SignupForm";
@@ -9,6 +8,7 @@ import DashboardPage from "./pages/DashboardPage";
 import Dashboard from "./components/Dashboard/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import GradesPage from "./pages/GradeTrackingPage";
+import AssignmentPage from "./pages/AssignmentPage";
 import Grades from "./components/Grades/GradeList";
 import SettingsPage from "./pages/SettingsPage";
 import HelpPage from "./pages/HelpPage";
@@ -37,7 +37,7 @@ function Layout({ children }) {
           </div>
         </>
       )}
-      <main className={`main-container pad-y-2 pad-x-4 ${isLoginPage ? "login-page" : ""}`}>
+      <main className={`main-container pad-0 ${isLoginPage ? "login-page" : ""}`}>
         {children}
       </main>
     </div>
@@ -72,6 +72,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/assignments" element={<AssignmentPage />} />
           <Route path="/subjects" element={<SubjectsPage />} />
           <Route
             path="/profile"
