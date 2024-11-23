@@ -3,225 +3,397 @@ import axios from "axios";
 import {
   Box,
   Typography,
-  Paper,
+  TextField,
+  Button,
+  Tabs,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
-  Button,
   TableHead,
   TableRow,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
   Snackbar,
   Alert,
-  Pagination,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Autocomplete,
 } from "@mui/material";
+
+const decodeToken = (token) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      window
+        .atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error("Invalid token format", error);
+    return null;
+  }
+};
 
 function AssignmentsPage() {
   const [assignmentsList, setAssignmentsList] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const [newAssignment, setNewAssignment] = useState({
+    name: "",
+    s_id: "",
+    due_date: new Date().toISOString().split("T")[0]
+  });
   const [editMode, setEditMode] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-  const [assignmentData, setAssignmentData] = useState({ name: "", due_date: "" });
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 5; // Customize as needed
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [assignmentToEdit, setAssignmentToEdit] = useState(null);
 
   const backendUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("jwtToken");
 
   useEffect(() => {
-    fetchUserAssignments();
+    fetchSubjectsAndAssignments();
   }, []);
 
-  const fetchUserAssignments = async () => {
+  const fetchSubjectsAndAssignments = async () => {
     try {
-      if (!token) throw new Error("No token found");
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.get(`${backendUrl}/api/assignments`, config);
-      setAssignmentsList(response.data);
+      const [subjectsResponse, assignmentsResponse] = await Promise.all([
+        axios.get(`${backendUrl}/api/subjects`, config),
+        axios.get(`${backendUrl}/api/assignments`, config),
+      ]);
+      setSubjects(subjectsResponse.data);
+      setAssignmentsList(assignmentsResponse.data);
     } catch (error) {
-      console.error("Error fetching assignments:", error);
+      console.error("Error fetching data:", error);
+      setSnackbar({
+        open: true,
+        message: "Error loading data",
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOpenDialog = (assignment = null) => {
-    setEditMode(!!assignment);
-    setAssignmentData(assignment || { name: "", due_date: "" });
-    setOpenDialog(true);
+  const handleTabChange = (event, newValue) => {
+    setSelectedTab(newValue);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditMode(false);
-    setAssignmentData({ name: "", due_date: "" });
-  };
-
-  const handleSaveAssignment = async () => {
-    // Validate required fields
-    if (!assignmentData.name || !assignmentData.due_date) {
-      setSnackbar({ open: true, message: "All fields are required.", severity: "error" });
-      return;
-    }
-  
-    try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-  
-      const uid = JSON.parse(atob(token.split('.')[1])).user_id;
-      const updatedAssignmentData = {
-        ...assignmentData,
-        uid,
-        s_id: 1,
-      };
-  
-      if (editMode) {
-        await axios.put(
-          `${backendUrl}/api/assignments/${updatedAssignmentData._id}`,
-          updatedAssignmentData,
-          config
-        );
-        setSnackbar({ open: true, message: "Assignment updated successfully!", severity: "success" });
-      } else {
-        // Create new assignment
-        await axios.post(`${backendUrl}/api/assignment`, updatedAssignmentData, config);
-        setSnackbar({ open: true, message: "Assignment added successfully!", severity: "success" });
-      }
-  
-      // Refresh assignments list
-      fetchUserAssignments();
-    } catch (error) {
-      console.error("Error saving assignment:", error);
-      setSnackbar({ open: true, message: "Error saving assignment.", severity: "error" });
-    } finally {
-      handleCloseDialog();
-    }
-  };
-  
-
-  const handleDeleteAssignment = async (id) => {
-    try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      await axios.delete(`${backendUrl}/api/assignments/${id}`, config);
-      setSnackbar({ open: true, message: "Assignment deleted successfully!", severity: "success" });
-      fetchUserAssignments();
-    } catch (error) {
-      setSnackbar({ open: true, message: "Error deleting assignment.", severity: "error" });
-    }
+  const getAssignmentsForSubject = (subjectId) => {
+    return assignmentsList.filter(
+      (assignment) => assignment.s_id && assignment.s_id._id === subjectId
+    );
   };
 
   const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
 
-  const handlePageChange = (event, value) => {
-    setPage(value);
+  const handleInputChange = (e) => {
+    setNewAssignment({ ...newAssignment, [e.target.name]: e.target.value });
   };
 
-  const paginatedData = assignmentsList.slice(
-    (page - 1) * itemsPerPage,
-    page * itemsPerPage
-  );
+  const handleAddAssignment = async () => {
+    if (!newAssignment.name || !newAssignment.s_id || !newAssignment.due_date) {
+      setSnackbar({
+        open: true,
+        message: "All fields are required",
+        severity: "error",
+      });
+      return;
+    }
+
+    const decodedToken = decodeToken(token);
+    const userId = decodedToken?.userId;
+
+    const updatedAssignmentData = {
+      ...newAssignment,
+      uid: userId,
+    };
+
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const endpoint = editMode
+        ? `${backendUrl}/api/assignments/${assignmentToEdit._id}`
+        : `${backendUrl}/api/assignment`;
+      const method = editMode ? "put" : "post";
+
+      const response = await axios[method](
+        endpoint,
+        updatedAssignmentData,
+        config
+      );
+
+      response.data.s_id = { _id: response.data.s_id };
+
+      if (editMode) {
+        setAssignmentsList((prevList) =>
+          prevList.map((assignment) =>
+            assignment._id === assignmentToEdit._id
+              ? { ...assignment, ...response.data }
+              : assignment
+          )
+        );
+        setSnackbar({
+          open: true,
+          message: "Assignment updated successfully",
+          severity: "success",
+        });
+      } else {
+        setAssignmentsList((prevList) => [...prevList, response.data]);
+        setSnackbar({
+          open: true,
+          message: "Assignment added successfully",
+          severity: "success",
+        });
+      }
+
+      setDialogOpen(false);
+      setNewAssignment({ name: "", s_id: "", due_date: new Date().toISOString().split("T")[0] });
+      setEditMode(false);
+      setAssignmentToEdit(null);
+    } catch (error) {
+      console.error("Error adding/updating assignment:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to add/update assignment",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleEdit = (assignment) => {
+    setNewAssignment({
+      name: assignment.name,
+      s_id: assignment.s_id._id,
+      due_date: assignment.due_date.split("T")[0],
+    });
+    setEditMode(true);
+    setAssignmentToEdit(assignment);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async (assignmentId) => {
+    console.log(assignmentId);
+
+    if (!window.confirm("Are you sure you want to delete this assignment?"))
+      return;
+
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      await axios.delete(
+        `${backendUrl}/api/assignments/${assignmentId}`,
+        config
+      );
+
+      setAssignmentsList((prevList) =>
+        prevList.filter((assignment) => assignment._id !== assignmentId)
+      );
+      setSnackbar({
+        open: true,
+        message: "Assignment deleted successfully",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Error deleting assignment:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to delete assignment",
+        severity: "error",
+      });
+    }
+  };
 
   return (
     <Box sx={{ padding: 4, minHeight: "100vh", backgroundColor: "#f9f9f9" }}>
       <Typography variant="h4" gutterBottom>
         Assignments
       </Typography>
+
       <Button
         variant="contained"
         color="primary"
-        onClick={() => handleOpenDialog()}
-        sx={{ marginBottom: 2 }}
+        onClick={() => {
+          setDialogOpen(true);
+          setNewAssignment({ name: "", s_id: "", due_date: new Date().toISOString().split("T")[0] });
+          setEditMode(false);
+          setAssignmentToEdit(null);
+        }}
+        sx={{ marginBottom: 3 }}
       >
         Add New Assignment
       </Button>
-      {loading ? (
-        <Typography>Loading assignments...</Typography>
-      ) : assignmentsList.length > 0 ? (
-        <>
-          <TableContainer component={Paper} elevation={3} sx={{ marginTop: 2 }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell><strong>Name</strong></TableCell>
-                  <TableCell><strong>Due Date</strong></TableCell>
-                  <TableCell><strong>Actions</strong></TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedData.map((assignment, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{assignment.name}</TableCell>
-                    <TableCell>
-                      {assignment.due_date
-                        ? new Date(assignment.due_date).toLocaleDateString()
-                        : "N/A"}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => handleOpenDialog(assignment)}
-                        sx={{ marginRight: 1 }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => handleDeleteAssignment(assignment._id)}
-                      >
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Pagination
-            count={Math.ceil(assignmentsList.length / itemsPerPage)}
-            page={page}
-            onChange={handlePageChange}
-            sx={{ marginTop: 2, display: "flex", justifyContent: "center" }}
-          />
-        </>
-      ) : (
-        <Typography>No assignments found.</Typography>
-      )}
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>{editMode ? "Edit Assignment" : "Add Assignment"}</DialogTitle>
+      <Tabs
+        value={selectedTab}
+        onChange={handleTabChange}
+        indicatorColor="primary"
+        textColor="primary"
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ marginBottom: 2 }}
+      >
+        {subjects.map((subject) => (
+          <Tab key={subject._id} label={subject.subjectTitle} />
+        ))}
+      </Tabs>
+
+      {subjects.map((subject, index) => (
+        <Box
+          key={subject._id}
+          role="tabpanel"
+          hidden={selectedTab !== index}
+          id={`tabpanel-${index}`}
+          aria-labelledby={`tab-${index}`}
+        >
+          {selectedTab === index && (
+            <Box>
+              <Typography variant="h5" gutterBottom>
+                {subject.subjectTitle} Assignments
+              </Typography>
+              {getAssignmentsForSubject(subject._id).length > 0 ? (
+                <TableContainer
+                  component={Paper}
+                  elevation={3}
+                  sx={{ marginTop: 2 }}
+                >
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>
+                          <strong>Name</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Due Date</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Actions</strong>
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {getAssignmentsForSubject(subject._id).map(
+                        (assignment) => (
+                          <TableRow key={assignment._id}>
+                            <TableCell>{assignment.name}</TableCell>
+                            <TableCell>
+                              {assignment.due_date
+                                ? new Date(
+                                    assignment.due_date
+                                  ).toLocaleDateString()
+                                : "N/A"}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                onClick={() => handleEdit(assignment)}
+                                color="primary"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                onClick={() => handleDelete(assignment._id)}
+                                color="secondary"
+                              >
+                                Delete
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Typography>
+                  No assignments for {subject.subjectTitle}.
+                </Typography>
+              )}
+            </Box>
+          )}
+        </Box>
+      ))}
+
+      {/* Dialog for Adding/Editing Assignment */}
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          {editMode ? "Edit Assignment" : "Add New Assignment"}
+        </DialogTitle>
         <DialogContent>
           <TextField
-            label="Name"
+            label="Assignment Name"
+            name="name"
+            value={newAssignment.name}
+            onChange={handleInputChange}
             fullWidth
-            margin="normal"
-            value={assignmentData.name}
-            onChange={(e) => setAssignmentData({ ...assignmentData, name: e.target.value })}
+            sx={{ marginBottom: 2 }}
           />
+
+          <Box>
+            <Autocomplete
+              options={subjects}
+              getOptionLabel={(option) => option.subjectTitle || ""}
+              value={
+                subjects.find(
+                  (subject) => subject._id === newAssignment.s_id
+                ) || null
+              }
+              onChange={(event, newValue) => {
+                setNewAssignment({
+                  ...newAssignment,
+                  s_id: newValue ? newValue._id : "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Subject"
+                  name="s_id"
+                  fullWidth
+                  sx={{ marginBottom: 2 }}
+                />
+              )}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              fullWidth
+              sx={{ width: "100%" }}
+            />
+          </Box>
           <TextField
             label="Due Date"
+            name="due_date"
             type="date"
+            value={newAssignment.due_date}
+            onChange={handleInputChange}
             fullWidth
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-            value={assignmentData.due_date ? assignmentData.due_date.split("T")[0] : ""}
-            onChange={(e) => setAssignmentData({ ...assignmentData, due_date: e.target.value })}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button variant="contained" color="primary" onClick={handleSaveAssignment}>
-            Save
+          <Button onClick={() => setDialogOpen(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleAddAssignment} color="primary">
+            {editMode ? "Update" : "Add"}
           </Button>
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
