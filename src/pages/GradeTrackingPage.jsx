@@ -3,6 +3,7 @@ import axios from "axios";
 import {
   Box,
   Typography,
+  TextField,
   LinearProgress,
   Button,
   Table,
@@ -13,8 +14,14 @@ import {
   TableRow,
   Paper,
   Accordion,
+  Alert,
   AccordionDetails,
   AccordionSummary,
+  Dialog,
+  DialogTitle,
+  Snackbar,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import AddIcon from "@mui/icons-material/Add";
@@ -42,6 +49,23 @@ function GradesPage() {
   const [loading, setLoading] = useState(true);
   const [subjects, setSubjects] = useState([]);
   const [assignmentsList, setAssignmentsList] = useState([]);
+
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const [newGrade, setNewGrade] = useState({
+    grade: "",
+    outOf: "",
+    s_id: "",
+    a_id: ""
+  });
+  const [editMode, setEditMode] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [gradeToEdit, setGradeToEdit] = useState(null);
+
   const backendUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("jwtToken");
 
@@ -124,6 +148,77 @@ function GradesPage() {
     );
 
     return filteredAssignments;
+  };
+
+  const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
+
+  const handleInputChange = (e) => {
+    setNewGrade({ ...newGrade, [e.target.name]: e.target.value });
+  };
+
+  const handleAddGrade = async () => {
+    if (!newGrade.grade || !newGrade.outOf) {
+      setSnackbar({
+        open: true,
+        message: "Grade and Out of Grade are required",
+        severity: "error",
+      });
+      return;
+    }
+
+    if(parseFloat(newGrade.gradeto) > parseFloat(newGrade.outOf)) {
+      setSnackbar({
+        open: true,
+        message: "Grades cannot be graeter then its out of grade",
+        severity: "error",
+      });
+      return;
+    }
+
+    const decodedToken = decodeToken(token);
+    const userId = decodedToken?.userId;
+
+    const updatedGradeData = {
+      ...newGrade,
+      notes: "",
+      uid: userId,
+    };
+
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const endpoint = editMode
+        ? `${backendUrl}/api/grades/${gradeToEdit._id}`
+        : `${backendUrl}/api/grade`;
+      const method = editMode ? "put" : "post";
+
+      const response = await axios[method](endpoint, updatedGradeData, config);
+
+      if (editMode) {
+        setSnackbar({
+          open: true,
+          message: "Assignment updated successfully",
+          severity: "success",
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: "Assignment added successfully",
+          severity: "success",
+        });
+      }
+
+      setDialogOpen(false);
+      setNewGrade({ garde: 0, outOf: 0, s_id: "", a_id: "" });
+      setEditMode(false);
+      setGradeToEdit(null);
+    } catch (error) {
+      console.error("Error adding/updating grade:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to add/update grade",
+        severity: "error",
+      });
+    }
   };
 
   return (
@@ -217,12 +312,11 @@ function GradesPage() {
                 <Box
                   sx={{
                     position: "absolute",
-                    height: "10px",
+                    height: "15px",
                     width: `${subject.targetGrade}%`,
                     backgroundColor: "#f4c430",
                     zIndex: 10,
                     transition: "0.3s",
-                    borderRadius: "10px",
                     top: "50%",
                     transform: "translate(0, -50%)",
                   }}
@@ -263,7 +357,7 @@ function GradesPage() {
                 id="panel1-header"
                 sx={{
                   "& .MuiAccordionSummary-expandIconWrapper": {
-                    alignSelf: "flex-end", // Aligns the icon to the bottom
+                    alignSelf: "flex-end",
                   },
                 }}
               >
@@ -397,6 +491,7 @@ function GradesPage() {
                                   sx={{
                                     display: "flex",
                                     alignItems: "center",
+                                    justifyContent: "space-between",
                                     gap: 1,
                                   }}
                                 >
@@ -437,7 +532,15 @@ function GradesPage() {
                                     color="primary"
                                     aria-label="Add grade"
                                     onClick={() => {
-                                      
+                                      setDialogOpen(true);
+                                      setNewGrade({
+                                        grade: 0,
+                                        outOf: 0,
+                                        s_id: subject._id,
+                                        a_id: assignment._id
+                                      });
+                                      setEditMode(false);
+                                      setGradeToEdit(null);
                                     }}
                                     sx={{
                                       backgroundColor: "#e7f1e8",
@@ -464,6 +567,58 @@ function GradesPage() {
           </Box>
         ))}
       </Box>
+
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{editMode ? "Edit Grade" : "Add New Grade"}</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Grade"
+            name="grade"
+            type="number"
+            value={newGrade.grade}
+            onChange={handleInputChange}
+            fullWidth
+            sx={{ marginBottom: 2 }}
+          />
+
+          <TextField
+            label="Out of Grade"
+            name="outOf"
+            type="number"
+            value={newGrade.outOf}
+            onChange={handleInputChange}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleAddGrade} color="primary">
+            {editMode ? "Update" : "Grade"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -76,6 +76,8 @@ function AssignmentsPage() {
         axios.get(`${backendUrl}/api/assignments`, config),
       ]);
       setSubjects(subjectsResponse.data);
+      
+      setNewAssignment({...newAssignment, s_id: subjectsResponse.data[0]._id})
       setAssignmentsList(assignmentsResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -90,6 +92,7 @@ function AssignmentsPage() {
   };
 
   const handleTabChange = (event, newValue) => {
+    setNewAssignment({...newAssignment, s_id: subjects[newValue]._id})
     setSelectedTab(newValue);
   };
 
@@ -227,7 +230,7 @@ function AssignmentsPage() {
         color="primary"
         onClick={() => {
           setDialogOpen(true);
-          setNewAssignment({ name: "", s_id: "", due_date: new Date().toISOString().split("T")[0] });
+          setNewAssignment({ name: "", s_id: newAssignment.s_id, due_date: new Date().toISOString().split("T")[0] });
           setEditMode(false);
           setAssignmentToEdit(null);
         }}
