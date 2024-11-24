@@ -14,6 +14,10 @@
 .main-container {
   border-top-left-radius: 30px;
   padding: 20px;
+  background-color: var(--bg-200);
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  overflow-y: scroll;
 }
 
 
