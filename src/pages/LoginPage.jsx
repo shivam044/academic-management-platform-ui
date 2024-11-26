@@ -14,7 +14,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const backendUrl = import.meta.env.VITE_API_URL;
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const navigate = useNavigate(); // Initialize navigate
 
   const handleSubmit = async (e) => {
