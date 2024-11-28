@@ -181,6 +181,28 @@ function CrudTestingPage () {
       <h1>CRUD Testing Page</h1>
 
       <div>
+        <h2>Users</h2>
+        <form onSubmit={(e) => { e.preventDefault(); handleCreateUser(); }}>
+          <input type="text" placeholder="Username" value={newUser.userName} onChange={(e) => setNewUser({ ...newUser, userName: e.target.value })} />
+          <input type="text" placeholder="First Name" value={newUser.firstName} onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })} />
+          <input type="text" placeholder="Last Name" value={newUser.lastName} onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })} />
+          <input type="email" placeholder="Email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
+          <input type="password" placeholder="Password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
+          <button type="submit">Create User</button>
+        </form>
+        {users.map((user) => (
+          <div key={user._id}>
+            <p>
+              Name: {user.firstName} {user.lastName} <br />
+              Email: {user.email} <br />
+              Username: {user.userName}
+            </p>
+            <button onClick={() => handleDeleteUser(user._id)}>Delete User</button>
+          </div>
+        ))}
+      </div>
+
+      <div>
         <h2>Grades</h2>
         <form onSubmit={(e) => { e.preventDefault(); handleCreateGrade(); }}>
           <input type="number" placeholder="Grade" value={newGrade.grade} onChange={(e) => setNewGrade({ ...newGrade, grade: e.target.value })} />

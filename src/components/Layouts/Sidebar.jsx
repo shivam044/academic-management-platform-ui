@@ -4,7 +4,8 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import EqualizerIcon from "@mui/icons-material/Equalizer";
 import SettingsIcon from "@mui/icons-material/Settings";
 import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks"; // Import for subjects
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 import "./css/sidebar.css";
 
@@ -41,6 +42,18 @@ function Sidebar() {
                 <EqualizerIcon />
               </div>
               <div className="sidebar-link-text font-smaller">Grades</div>
+            </Link>
+
+            <Link
+              className={`sidebar-link d-flex flex-direction-col aic pad-1 link-deco-none font-color-200 ${
+                isActive("/assignments") ? "active" : ""
+              }`}
+              to="/assignments"
+            >
+              <div className="sidebar-link-icon">
+                <AssignmentIcon />
+              </div>
+              <div className="sidebar-link-text font-smaller">Assignments</div>
             </Link>
 
             <Link
