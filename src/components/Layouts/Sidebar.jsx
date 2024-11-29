@@ -68,19 +68,31 @@ function Sidebar() {
               <div className="sidebar-link-text font-smaller">Subjects</div>
             </Link>
 
-            
-            {/* Crud Test Page TEMP */}
+
             <Link
               className={`sidebar-link d-flex flex-direction-col aic pad-1 link-deco-none font-color-200 ${
-                isActive("/crudtestpage") ? "active" : ""
+                isActive("/teachers") ? "active" : ""
               }`}
-              to="/crudtestpage"
+              to="/teachers"
             >
               <div className="sidebar-link-icon">
                 <LibraryBooksIcon />
               </div>
-              <div className="sidebar-link-text font-smaller">Crud Test Page</div>
+              <div className="sidebar-link-text font-smaller">Teachers</div>
             </Link>
+
+            <Link
+              className={`sidebar-link d-flex flex-direction-col aic pad-1 link-deco-none font-color-200 ${
+                isActive("/semesters") ? "active" : ""
+              }`}
+              to="/semesters"
+            >
+              <div className="sidebar-link-icon">
+                <LibraryBooksIcon />
+              </div>
+              <div className="sidebar-link-text font-smaller">Semesters</div>
+            </Link>
+
 
             <div className="pad-y-1"></div>
 

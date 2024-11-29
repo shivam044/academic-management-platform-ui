@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
-  Container,
   Typography,
   Box,
   CircularProgress,
-  Grid,
+  Grid2,
   Card,
   CardContent,
-  CardActions,
   Button,
   Dialog,
   DialogTitle,
@@ -16,13 +14,14 @@ import {
   TextField,
   Snackbar,
   Alert,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
+  Autocomplete,
+  IconButton,
+  Menu,
+  MenuItem as MuiMenuItem,
+
 } from "@mui/material";
-import { Email as EmailIcon, School as SchoolIcon } from "@mui/icons-material";
-import decodeToken from "../helpers/decodeToken"; 
+import { MoreVert as MoreVertIcon } from "@mui/icons-material";
+import decodeToken from "../helpers/decodeToken";
 import {
   createSubject,
   getSubjectsByUser,
@@ -39,8 +38,20 @@ function SubjectsPage() {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [subjectData, setSubjectData] = useState({ subjectTitle: "", targetGrade: "", room: "", semester_id: "", t_uid: "" });
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [subjectData, setSubjectData] = useState({
+    subjectTitle: "",
+    targetGrade: "",
+    room: "",
+    semester_id: "",
+    t_uid: "",
+  });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedSubject, setSelectedSubject] = useState(null);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -88,14 +99,22 @@ function SubjectsPage() {
 
   const handleOpenDialog = (subject = null) => {
     setEditMode(!!subject);
-    setSubjectData(subject || { subjectTitle: "", targetGrade: "", room: "", semester_id: "", t_uid: "" });
+    setSubjectData(
+      subject || { subjectTitle: "", targetGrade: "", room: "", semester_id: "", t_uid: "" }
+    );
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditMode(false);
-    setSubjectData({ subjectTitle: "", targetGrade: "", room: "", semester_id: "", t_uid: "" });
+    setSubjectData({
+      subjectTitle: "",
+      targetGrade: "",
+      room: "",
+      semester_id: "",
+      t_uid: "",
+    });
   };
 
   const handleInputChange = (e) => {
@@ -107,15 +126,14 @@ function SubjectsPage() {
     try {
       const decodedToken = decodeToken(token);
       const userId = decodedToken?.userId;
-  
-      // Construct the requestData with only IDs
+
       const requestData = {
         ...subjectData,
         uid: userId,
-        t_uid: subjectData.t_uid, // Ensure this is an ID, not an object
-        semester_id: subjectData.semester_id, // Ensure this is an ID, not an object
+        t_uid: subjectData.t_uid,
+        semester_id: subjectData.semester_id,
       };
-  
+
       if (editMode) {
         await updateSubject(subjectData._id, requestData);
         showSnackbar("Subject updated successfully!", "success");
@@ -123,21 +141,19 @@ function SubjectsPage() {
         await createSubject(requestData);
         showSnackbar("Subject added successfully!", "success");
       }
-      fetchUserSubjects(); // Refresh the list after saving
+      fetchUserSubjects();
       handleCloseDialog();
     } catch (error) {
       console.error("Error saving subject:", error);
       showSnackbar("Failed to save subject.", "error");
     }
   };
-  
-  
 
   const handleDeleteSubject = async (id) => {
     try {
       await deleteSubject(id);
       showSnackbar("Subject deleted successfully!", "success");
-      fetchUserSubjects(); // Refresh the list after deleting
+      fetchUserSubjects();
     } catch (error) {
       console.error("Error deleting subject:", error);
       showSnackbar("Failed to delete subject.", "error");
@@ -148,119 +164,195 @@ function SubjectsPage() {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleMenuClick = (event, subject) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedSubject(subject);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedSubject(null);
+  };
+
+  const handleEditSubject = () => {
+    handleOpenDialog(selectedSubject);
+    handleMenuClose();
+  };
+
+  const handleDelete = () => {
+    handleDeleteSubject(selectedSubject._id);
+    handleMenuClose();
+  };
+
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+      <Box
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}
+      >
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ paddingTop: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
+    <Box sx={{ padding: 4, minHeight: "100vh", backgroundColor: "#f9f9f9" }}>
+      <Typography variant="h4" gutterBottom>
         Subjects
       </Typography>
-      <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ marginBottom: 2 }}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => handleOpenDialog()}
+        sx={{ marginBottom: 3 }}
+      >
         Add New Subject
       </Button>
-      <Grid container spacing={4}>
-        {subjects.map((subject) => (
-          <Grid item xs={12} sm={6} md={4} key={subject._id}>
-            <Card sx={{ height: "100%" }}>
-              <CardContent>
-                <Typography variant="h6" component="div" sx={{ display: "flex", alignItems: "center" }}>
-                  <SchoolIcon sx={{ mr: 1 }} />
-                  {subject.subjectTitle}
-                </Typography>
-                <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-                  Target Grade: {subject.targetGrade}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Teacher: {subject.t_uid?.firstName} {subject.t_uid?.lastName}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                  <EmailIcon sx={{ mr: 0.5 }} />
-                  {subject.t_uid?.email}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Room: {subject.room}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Semester: {subject.semester_id?.title}
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button size="small" color="primary" onClick={() => handleOpenDialog(subject)}>
-                  Edit
-                </Button>
-                <Button size="small" color="secondary" onClick={() => handleDeleteSubject(subject._id)}>
-                  Delete
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+      <Box
+        sx={{
+          padding: "20px",
+          columnCount: { md: 1, lg: 2, xl: 3 },
+          columnGap: { md: "20px", lg: "40px" },
+        }}
+      >
+        {subjects.map((subject, index) => (
+          <Box
+            key={subject.id || index}
+            sx={{
+              marginBottom: "40px",
+              breakInside: "avoid",
+              backgroundColor: "white",
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+              borderRadius: "20px",
+              padding: "20px",
+              position: "relative",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: "40px",
+              }}
+            >
+              <Typography variant="h6" sx={{ fontSize: "var(--normal)" }}>
+                {subject.subjectTitle}
+              </Typography>
+              <IconButton
+                aria-label="more"
+                aria-controls="long-menu"
+                aria-haspopup="true"
+                onClick={(event) => handleMenuClick(event, subject)}
+                sx={{ position: "absolute", top: "10px", right: "10px" }}
+              >
+                <MoreVertIcon />
+              </IconButton>
+            </Box>
+            <Typography variant="body2" color="textPrimary" sx={{ marginTop: 1 }}>
+              <strong>Teacher:</strong> {subject.t_uid?.first_name} {subject.t_uid?.last_name}
+            </Typography>
+            <Typography variant="body2" color="textPrimary">
+              <strong>Email:</strong> {subject.t_uid?.school_email}
+            </Typography>
+            <Typography variant="body2" color="textPrimary">
+              <strong>Room:</strong> {subject.room}
+            </Typography>
+            <Typography variant="body2" color="textPrimary">
+              <strong>Semester:</strong> {subject.semester_id?.title}
+            </Typography>
+            <Typography variant="body2" color="textPrimary">
+              <strong>Target Grade:</strong> {subject.targetGrade}%
+            </Typography>
+          </Box>
         ))}
-      </Grid>
+      </Box>
 
-      {/* Dialog for Adding or Editing a Subject */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>{editMode ? "Edit Subject" : "Add New Subject"}</DialogTitle>
+      <Menu anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MuiMenuItem onClick={handleEditSubject}>Edit</MuiMenuItem>
+        <MuiMenuItem onClick={handleDelete}>Delete</MuiMenuItem>
+      </Menu>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ color: "#d3d3d3" }}>
+          {editMode ? "Edit Subject" : "Add New Subject"}
+        </DialogTitle>
         <DialogContent>
           <TextField
-            margin="dense"
             label="Subject Title"
             name="subjectTitle"
-            fullWidth
             value={subjectData.subjectTitle}
             onChange={handleInputChange}
+            fullWidth
+            sx={{ marginBottom: 2 }}
           />
           <TextField
-            margin="dense"
             label="Target Grade"
             name="targetGrade"
-            fullWidth
             type="number"
             value={subjectData.targetGrade}
             onChange={handleInputChange}
+            fullWidth
+            sx={{ marginBottom: 2 }}
           />
           <TextField
-            margin="dense"
             label="Room"
             name="room"
-            fullWidth
             value={subjectData.room}
             onChange={handleInputChange}
+            fullWidth
+            sx={{ marginBottom: 2 }}
           />
-          <FormControl fullWidth margin="dense">
-          <InputLabel>Semester</InputLabel>
-          <Select
-            name="semester_id"
-            value={subjectData.semester_id} // This should be the ID
-            onChange={handleInputChange}
-          >
-            {semesters.map((semester) => (
-              <MenuItem key={semester._id} value={semester._id}>
-                {semester.title}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Teacher</InputLabel>
-          <Select
-            name="t_uid"
-            value={subjectData.t_uid} // This should be the ID
-            onChange={handleInputChange}
-          >
-            {teachers.map((teacher) => (
-              <MenuItem key={teacher._id} value={teacher._id}>
-                {teacher.first_name} {teacher.last_name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+          <Box>
+            <Autocomplete
+              options={semesters}
+              getOptionLabel={(option) => option.title || ""}
+              value={
+                semesters.find((semester) => semester._id === subjectData.semester_id?._id) || null
+              }
+              onChange={(event, newValue) => {
+                setSubjectData({
+                  ...subjectData,
+                  semester_id: newValue ? newValue : "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Semester"
+                  name="semester_id"
+                  fullWidth
+                  sx={{ marginBottom: 2 }}
+                />
+              )}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              fullWidth
+              sx={{ width: "100%" }}
+            />
+          </Box>
+          <Box>
+            <Autocomplete
+              options={teachers}
+              getOptionLabel={(option) => `${option.first_name} ${option.last_name}` || ""}
+              value={teachers.find((teacher) => teacher._id === subjectData.t_uid?._id) || null}
+              onChange={(event, newValue) => {
+                setSubjectData({
+                  ...subjectData,
+                  t_uid: newValue ? newValue : "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Teacher"
+                  name="t_uid"
+                  fullWidth
+                  sx={{ marginBottom: 2 }}
+                />
+              )}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              fullWidth
+              sx={{ width: "100%" }}
+            />
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} color="secondary">
@@ -272,7 +364,6 @@ function SubjectsPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for Notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
@@ -283,7 +374,7 @@ function SubjectsPage() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 }
 

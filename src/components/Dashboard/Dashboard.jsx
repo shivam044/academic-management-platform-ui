@@ -1,7 +1,8 @@
+import AgendaPage from "../../pages/AgendaPage";
 import DashboardPage from "../../pages/DashboardPage";
 
 function Dashboard() { 
-    return <DashboardPage/>
+    return <AgendaPage/>
 }
 
 export default Dashboard;

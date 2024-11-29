@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import {
   Box,
   Typography,
@@ -26,24 +25,20 @@ import {
 import IconButton from "@mui/material/IconButton";
 import AddIcon from "@mui/icons-material/Add";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-
-const decodeToken = (token) => {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      window
-        .atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error("Invalid token format", error);
-    return null;
-  }
-};
+import {
+  createGrade,
+  getAllGrades,
+  updateGrade,
+  deleteGrade,
+  getGradesByUser,
+} from "../api/grade";
+import {
+  getSubjectsByUser,
+} from "../api/subject";
+import {
+  getAssignmentsByUser,
+} from "../api/assignment";
+import decodeToken from "../helpers/decodeToken";
 
 function GradesPage() {
   const [loading, setLoading] = useState(true);
@@ -60,13 +55,12 @@ function GradesPage() {
     grade: "",
     outOf: "",
     s_id: "",
-    a_id: ""
+    a_id: "",
   });
   const [editMode, setEditMode] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [gradeToEdit, setGradeToEdit] = useState(null);
 
-  const backendUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("jwtToken");
 
   useEffect(() => {
@@ -75,20 +69,22 @@ function GradesPage() {
 
   const fetchSubjectsAndAssignmentsAndGrades = async () => {
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const [subjectsResponse, assignmentsResponse, gradesResponse] =
-        await Promise.all([
-          axios.get(`${backendUrl}/api/subjects`, config),
-          axios.get(`${backendUrl}/api/assignments`, config),
-          axios.get(`${backendUrl}/api/grades`, config),
-        ]);
+      if (!token) throw new Error("No token found");
+      const decodedToken = decodeToken(token);
+      const userId = decodedToken?.userId;
 
-      const updatedSubjects = subjectsResponse.data.map((subject) => {
-        const filteredAssignments = assignmentsResponse.data.filter(
+      const [subjects, assignments, grades] = await Promise.all([
+        getSubjectsByUser(userId),
+        getAssignmentsByUser(userId),
+        getGradesByUser(userId),
+      ]);
+
+      const updatedSubjects = subjects.map((subject) => {
+        const filteredAssignments = assignments.filter(
           (assignment) => assignment.s_id && assignment.s_id._id === subject._id
         );
 
-        const gradesForSubject = gradesResponse.data.filter(
+        const gradesForSubject = grades.filter(
           (grade) => grade.s_id && grade.s_id._id === subject._id
         );
 
@@ -100,9 +96,7 @@ function GradesPage() {
           (sum, grade) => sum + grade.outOf,
           0
         );
-        const totalLose =
-          gradesForSubject.reduce((sum, grade) => sum + grade.outOf, 0) -
-          totalAchieved;
+        const totalLose = totalOutOf - totalAchieved;
 
         return {
           ...subject,
@@ -115,39 +109,28 @@ function GradesPage() {
 
       setSubjects(updatedSubjects);
 
-      const updatedAssignmentList = assignmentsResponse.data.map(
-        (assignment) => {
-          const grade = gradesResponse.data.find(
-            (grade) => grade.a_id._id === assignment._id
-          );
+      const updatedAssignmentList = assignments.map((assignment) => {
+        const grade = grades.find(
+          (grade) => grade.a_id && grade.a_id._id === assignment._id
+        );
 
-          if (!grade) {
-            return {
-              ...assignment,
-            };
-          }
-
-          return {
-            ...assignment,
-            grade,
-          };
-        }
-      );
+        return {
+          ...assignment,
+          grade: grade || null,
+        };
+      });
 
       setAssignmentsList(updatedAssignmentList);
     } catch (error) {
       console.error("Error fetching data:", error);
+      showSnackbar("Failed to fetch data.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const getAssignmentsForSubject = (subjectId) => {
-    const filteredAssignments = assignmentsList.filter(
-      (assignment) => assignment.s_id && assignment.s_id._id === subjectId
-    );
-
-    return filteredAssignments;
+  const showSnackbar = (message, severity) => {
+    setSnackbar({ open: true, message, severity });
   };
 
   const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
@@ -166,10 +149,10 @@ function GradesPage() {
       return;
     }
 
-    if(parseFloat(newGrade.gradeto) > parseFloat(newGrade.outOf)) {
+    if (parseFloat(newGrade.grade) > parseFloat(newGrade.outOf)) {
       setSnackbar({
         open: true,
-        message: "Grades cannot be graeter then its out of grade",
+        message: "Grade cannot be greater than the Out of Grade",
         severity: "error",
       });
       return;
@@ -185,40 +168,29 @@ function GradesPage() {
     };
 
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const endpoint = editMode
-        ? `${backendUrl}/api/grades/${gradeToEdit._id}`
-        : `${backendUrl}/api/grade`;
-      const method = editMode ? "put" : "post";
-
-      const response = await axios[method](endpoint, updatedGradeData, config);
-
       if (editMode) {
-        setSnackbar({
-          open: true,
-          message: "Assignment updated successfully",
-          severity: "success",
-        });
+        await updateGrade(gradeToEdit._id, updatedGradeData);
+        showSnackbar("Grade updated successfully", "success");
       } else {
-        setSnackbar({
-          open: true,
-          message: "Assignment added successfully",
-          severity: "success",
-        });
+        await createGrade(updatedGradeData);
+        showSnackbar("Grade added successfully", "success");
       }
 
       setDialogOpen(false);
-      setNewGrade({ garde: 0, outOf: 0, s_id: "", a_id: "" });
+      setNewGrade({ grade: 0, outOf: 0, s_id: "", a_id: "" });
       setEditMode(false);
       setGradeToEdit(null);
+      fetchSubjectsAndAssignmentsAndGrades();
     } catch (error) {
       console.error("Error adding/updating grade:", error);
-      setSnackbar({
-        open: true,
-        message: "Failed to add/update grade",
-        severity: "error",
-      });
+      showSnackbar("Failed to add/update grade", "error");
     }
+  };
+
+  const getAssignmentsForSubject = (subjectId) => {
+    return assignmentsList.filter(
+      (assignment) => assignment.s_id && assignment.s_id._id === subjectId
+    );
   };
 
   return (
@@ -537,7 +509,7 @@ function GradesPage() {
                                         grade: 0,
                                         outOf: 0,
                                         s_id: subject._id,
-                                        a_id: assignment._id
+                                        a_id: assignment._id,
                                       });
                                       setEditMode(false);
                                       setGradeToEdit(null);

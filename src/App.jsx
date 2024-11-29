@@ -9,6 +9,7 @@ import Dashboard from "./components/Dashboard/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import GradesPage from "./pages/GradeTrackingPage";
 import AssignmentPage from "./pages/AssignmentPage";
+import AgendaPage from "./pages/AgendaPage";
 import Grades from "./components/Grades/GradeList";
 import SettingsPage from "./pages/SettingsPage";
 import HelpPage from "./pages/HelpPage";
@@ -19,7 +20,6 @@ import ProtectedRoute from "./hooks/useAuth";
 import CrudTestPage from "./pages/CrudTestPage";
 import TeachersPage from "./pages/TeachersPage";
 import SemestersPage from "./pages/SemestersPage";
-
 
 import "./App.css";
 
@@ -59,6 +59,7 @@ function App() {
           <Route path="/teachers" element={<TeachersPage />} />
           <Route path="/semesters" element={<SemestersPage />} />
           <Route path="/signup" element={<SignupPage />} />
+
           
           {/* Protect the routes by wrapping them in ProtectedRoute */}
           <Route
@@ -78,6 +79,7 @@ function App() {
             }
           />
           <Route path="/assignments" element={<AssignmentPage />} />
+          <Route path="/agenda" element={<AgendaPage />} />
           <Route path="/subjects" element={<SubjectsPage />} />
           <Route
             path="/profile"

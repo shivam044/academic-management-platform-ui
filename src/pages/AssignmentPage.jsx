@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import {
   Box,
   Typography,
@@ -22,24 +21,14 @@ import {
   DialogActions,
   Autocomplete,
 } from "@mui/material";
-
-const decodeToken = (token) => {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      window
-        .atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error("Invalid token format", error);
-    return null;
-  }
-};
+import {
+  createAssignment,
+  updateAssignment,
+  deleteAssignment,
+  getAssignmentsByUser,
+} from "../api/assignment";
+import { getSubjectsByUser } from "../api/subject";
+import decodeToken from "../helpers/decodeToken";
 
 function AssignmentsPage() {
   const [assignmentsList, setAssignmentsList] = useState([]);
@@ -55,13 +44,12 @@ function AssignmentsPage() {
   const [newAssignment, setNewAssignment] = useState({
     name: "",
     s_id: "",
-    due_date: new Date().toISOString().split("T")[0]
+    due_date: new Date().toISOString().split("T")[0],
   });
   const [editMode, setEditMode] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [assignmentToEdit, setAssignmentToEdit] = useState(null);
 
-  const backendUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("jwtToken");
 
   useEffect(() => {
@@ -70,15 +58,17 @@ function AssignmentsPage() {
 
   const fetchSubjectsAndAssignments = async () => {
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const [subjectsResponse, assignmentsResponse] = await Promise.all([
-        axios.get(`${backendUrl}/api/subjects`, config),
-        axios.get(`${backendUrl}/api/assignments`, config),
+      if (!token) throw new Error("No token found");
+      const decodedToken = decodeToken(token);
+      const userId = decodedToken?.userId;
+
+      const [subjects, assignments] = await Promise.all([
+        getSubjectsByUser(userId),
+        getAssignmentsByUser(userId),
       ]);
-      setSubjects(subjectsResponse.data);
-      
-      setNewAssignment({...newAssignment, s_id: subjectsResponse.data[0]._id})
-      setAssignmentsList(assignmentsResponse.data);
+      setSubjects(subjects);
+      setNewAssignment({ ...newAssignment, s_id: subjects[0]?._id || "" });
+      setAssignmentsList(assignments);
     } catch (error) {
       console.error("Error fetching data:", error);
       setSnackbar({
@@ -92,7 +82,7 @@ function AssignmentsPage() {
   };
 
   const handleTabChange = (event, newValue) => {
-    setNewAssignment({...newAssignment, s_id: subjects[newValue]._id})
+    setNewAssignment({ ...newAssignment, s_id: subjects[newValue]._id });
     setSelectedTab(newValue);
   };
 
@@ -127,25 +117,12 @@ function AssignmentsPage() {
     };
 
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const endpoint = editMode
-        ? `${backendUrl}/api/assignments/${assignmentToEdit._id}`
-        : `${backendUrl}/api/assignment`;
-      const method = editMode ? "put" : "post";
-
-      const response = await axios[method](
-        endpoint,
-        updatedAssignmentData,
-        config
-      );
-
-      response.data.s_id = { _id: response.data.s_id };
-
       if (editMode) {
+        await updateAssignment(assignmentToEdit._id, updatedAssignmentData);
         setAssignmentsList((prevList) =>
           prevList.map((assignment) =>
             assignment._id === assignmentToEdit._id
-              ? { ...assignment, ...response.data }
+              ? { ...assignment, ...updatedAssignmentData }
               : assignment
           )
         );
@@ -155,7 +132,8 @@ function AssignmentsPage() {
           severity: "success",
         });
       } else {
-        setAssignmentsList((prevList) => [...prevList, response.data]);
+        const newAssignmentResponse = await createAssignment(updatedAssignmentData);
+        setAssignmentsList((prevList) => [...prevList, newAssignmentResponse]);
         setSnackbar({
           open: true,
           message: "Assignment added successfully",
@@ -189,18 +167,10 @@ function AssignmentsPage() {
   };
 
   const handleDelete = async (assignmentId) => {
-    console.log(assignmentId);
-
-    if (!window.confirm("Are you sure you want to delete this assignment?"))
-      return;
+    if (!window.confirm("Are you sure you want to delete this assignment?")) return;
 
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      await axios.delete(
-        `${backendUrl}/api/assignments/${assignmentId}`,
-        config
-      );
-
+      await deleteAssignment(assignmentId);
       setAssignmentsList((prevList) =>
         prevList.filter((assignment) => assignment._id !== assignmentId)
       );

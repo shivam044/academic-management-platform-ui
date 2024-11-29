@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
-  Container,
   Typography,
   Box,
   CircularProgress,
-  Grid,
+  Grid2,
   Card,
   CardContent,
-  CardActions,
   Button,
   Dialog,
   DialogTitle,
@@ -16,8 +14,11 @@ import {
   TextField,
   Snackbar,
   Alert,
+  IconButton,
+  Menu,
+  MenuItem as MuiMenuItem,
 } from "@mui/material";
-import { Email as EmailIcon, Person as PersonIcon } from "@mui/icons-material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import decodeToken from "../helpers/decodeToken";
 import {
   createTeacher,
@@ -31,8 +32,19 @@ function TeachersPage() {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [teacherData, setTeacherData] = useState({ first_name: "", last_name: "", phone: "", school_email: "" });
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [teacherData, setTeacherData] = useState({
+    first_name: "",
+    last_name: "",
+    phone: "",
+    school_email: "",
+  });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -57,7 +69,9 @@ function TeachersPage() {
 
   const handleOpenDialog = (teacher = null) => {
     setEditMode(!!teacher);
-    setTeacherData(teacher || { first_name: "", last_name: "", phone: "", school_email: "" });
+    setTeacherData(
+      teacher || { first_name: "", last_name: "", phone: "", school_email: "" }
+    );
     setOpenDialog(true);
   };
 
@@ -112,6 +126,26 @@ function TeachersPage() {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleMenuClick = (event, teacher) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedTeacher(teacher);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedTeacher(null);
+  };
+
+  const handleEditTeacher = () => {
+    handleOpenDialog(selectedTeacher);
+    handleMenuClose();
+  };
+
+  const handleDelete = () => {
+    handleDeleteTeacher(selectedTeacher._id);
+    handleMenuClose();
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
@@ -121,78 +155,107 @@ function TeachersPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ paddingTop: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
+    <Box sx={{ padding: 4, minHeight: "100vh", backgroundColor: "#f9f9f9" }}>
+      <Typography variant="h4" gutterBottom>
         Teachers
       </Typography>
-      <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ marginBottom: 2 }}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => handleOpenDialog()}
+        sx={{ marginBottom: 3 }}
+      >
         Add New Teacher
       </Button>
-      <Grid container spacing={4}>
-        {teachers.map((teacher) => (
-          <Grid item xs={12} sm={6} md={4} key={teacher._id}>
-            <Card sx={{ height: "100%" }}>
-              <CardContent>
-                <Typography variant="h6" component="div" sx={{ display: "flex", alignItems: "center" }}>
-                  <PersonIcon sx={{ mr: 1 }} />
-                  {teacher.first_name} {teacher.last_name}
-                </Typography>
-                <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-                  Phone: {teacher.phone}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                  <EmailIcon sx={{ mr: 0.5 }} />
-                  {teacher.school_email}
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button size="small" color="primary" onClick={() => handleOpenDialog(teacher)}>
-                  Edit
-                </Button>
-                <Button size="small" color="secondary" onClick={() => handleDeleteTeacher(teacher._id)}>
-                  Delete
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+      <Box
+        sx={{
+          padding: "20px",
+          columnCount: { md: 1, lg: 2, xl: 3 },
+          columnGap: { md: "20px", lg: "40px" },
+        }}
+      >
+        {teachers.map((teacher, index) => (
+          <Box
+            key={teacher._id || index}
+            sx={{
+              marginBottom: "40px",
+              breakInside: "avoid",
+              backgroundColor: "white",
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+              borderRadius: "20px",
+              padding: "20px",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: "40px",
+              }}
+            >
+              <Typography variant="h6" sx={{ fontSize: "var(--normal)" }}>
+                {teacher.first_name} {teacher.last_name}
+              </Typography>
+              <IconButton
+                aria-label="more"
+                aria-controls="long-menu"
+                aria-haspopup="true"
+                onClick={(event) => handleMenuClick(event, teacher)}
+              >
+                <MoreVertIcon />
+              </IconButton>
+            </Box>
+            <Typography variant="body2" color="textPrimary" sx={{ marginTop: 1 }}>
+              <strong>Phone:</strong> {teacher.phone}
+            </Typography>
+            <Typography variant="body2" color="textPrimary">
+              <strong>Email:</strong> {teacher.school_email}
+            </Typography>
+          </Box>
         ))}
-      </Grid>
+      </Box>
 
-      {/* Dialog for Adding or Editing a Teacher */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>{editMode ? "Edit Teacher" : "Add New Teacher"}</DialogTitle>
+      <Menu anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MuiMenuItem onClick={handleEditTeacher}>Edit</MuiMenuItem>
+        <MuiMenuItem onClick={handleDelete}>Delete</MuiMenuItem>
+      </Menu>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ color: "#d3d3d3" }}>
+          {editMode ? "Edit Teacher" : "Add New Teacher"}
+        </DialogTitle>
         <DialogContent>
           <TextField
-            margin="dense"
             label="First Name"
             name="first_name"
-            fullWidth
             value={teacherData.first_name}
             onChange={handleInputChange}
+            fullWidth
+            sx={{ marginBottom: 2 }}
           />
           <TextField
-            margin="dense"
             label="Last Name"
             name="last_name"
-            fullWidth
             value={teacherData.last_name}
             onChange={handleInputChange}
+            fullWidth
+            sx={{ marginBottom: 2 }}
           />
           <TextField
-            margin="dense"
             label="Phone"
             name="phone"
-            fullWidth
             value={teacherData.phone}
             onChange={handleInputChange}
+            fullWidth
+            sx={{ marginBottom: 2 }}
           />
           <TextField
-            margin="dense"
             label="School Email"
             name="school_email"
-            fullWidth
             value={teacherData.school_email}
             onChange={handleInputChange}
+            fullWidth
+            sx={{ marginBottom: 2 }}
           />
         </DialogContent>
         <DialogActions>
@@ -205,7 +268,6 @@ function TeachersPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for Notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
@@ -216,7 +278,7 @@ function TeachersPage() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 }
 

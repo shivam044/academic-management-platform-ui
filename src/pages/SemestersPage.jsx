@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
-  Container,
   Typography,
   Box,
   CircularProgress,
-  Grid,
+  Grid2,
   Card,
   CardContent,
-  CardActions,
   Button,
   Dialog,
   DialogTitle,
@@ -16,7 +14,11 @@ import {
   TextField,
   Snackbar,
   Alert,
+  IconButton,
+  Menu,
+  MenuItem as MuiMenuItem,
 } from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import decodeToken from "../helpers/decodeToken";
 import {
   createSemester,
@@ -32,6 +34,8 @@ function SemestersPage() {
   const [editMode, setEditMode] = useState(false);
   const [semesterData, setSemesterData] = useState({ title: "", startDate: "", endDate: "" });
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedSemester, setSelectedSemester] = useState(null);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -112,6 +116,26 @@ function SemestersPage() {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleMenuClick = (event, semester) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedSemester(semester);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedSemester(null);
+  };
+
+  const handleEditSemester = () => {
+    handleOpenDialog(selectedSemester);
+    handleMenuClose();
+  };
+
+  const handleDelete = () => {
+    handleDeleteSemester(selectedSemester._id);
+    handleMenuClose();
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
@@ -121,43 +145,61 @@ function SemestersPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ paddingTop: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
+    <Box sx={{ padding: 4, minHeight: "100vh", backgroundColor: "#f9f9f9" }}>
+      <Typography variant="h4" gutterBottom>
         Semesters
       </Typography>
-      <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ marginBottom: 2 }}>
+      <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ marginBottom: 3 }}>
         Add New Semester
       </Button>
-      <Grid container spacing={4}>
-        {semesters.map((semester) => (
-          <Grid item xs={12} sm={6} md={4} key={semester._id}>
-            <Card sx={{ height: "100%" }}>
-              <CardContent>
-                <Typography variant="h6" component="div">
-                  {semester.title}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Start Date: {new Date(semester.startDate).toLocaleDateString()}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  End Date: {new Date(semester.endDate).toLocaleDateString()}
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button size="small" color="primary" onClick={() => handleOpenDialog(semester)}>
-                  Edit
-                </Button>
-                <Button size="small" color="secondary" onClick={() => handleDeleteSemester(semester._id)}>
-                  Delete
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+      <Box
+        sx={{
+          padding: "20px",
+          columnCount: { md: 1, lg: 2, xl: 3 },
+          columnGap: { md: "20px", lg: "40px" },
+        }}
+      >
+        {semesters.map((semester, index) => (
+          <Box
+            key={semester.id || index}
+            sx={{
+              marginBottom: "40px",
+              breakInside: "avoid",
+              backgroundColor: "white",
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+              borderRadius: "20px",
+              padding: "20px",
+            }}
+          >
+            <Box sx={{ display: "flex", justifyContent: "space-between", gap: "40px" }}>
+              <Typography variant="h6" sx={{ fontSize: "var(--normal)" }}>
+                {semester.title}
+              </Typography>
+              <IconButton
+                aria-label="more"
+                aria-controls="long-menu"
+                aria-haspopup="true"
+                onClick={(event) => handleMenuClick(event, semester)}
+              >
+                <MoreVertIcon />
+              </IconButton>
+            </Box>
+            <Typography variant="body2" color="textPrimary" sx={{ marginTop: 1 }}>
+              <strong>Start Date:</strong> {new Date(semester.startDate).toLocaleDateString()}
+            </Typography>
+            <Typography variant="body2" color="textPrimary">
+              <strong>End Date:</strong> {new Date(semester.endDate).toLocaleDateString()}
+            </Typography>
+          </Box>
         ))}
-      </Grid>
+      </Box>
 
-      {/* Dialog for Adding or Editing a Semester */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
+      <Menu anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MuiMenuItem onClick={handleEditSemester}>Edit</MuiMenuItem>
+        <MuiMenuItem onClick={handleDelete}>Delete</MuiMenuItem>
+      </Menu>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
         <DialogTitle>{editMode ? "Edit Semester" : "Add New Semester"}</DialogTitle>
         <DialogContent>
           <TextField
@@ -167,9 +209,9 @@ function SemestersPage() {
             fullWidth
             value={semesterData.title}
             onChange={handleInputChange}
+            sx={{ marginBottom: 2 }}
           />
           <TextField
-            margin="dense"
             label="Start Date"
             name="startDate"
             type="date"
@@ -177,9 +219,9 @@ function SemestersPage() {
             value={semesterData.startDate}
             onChange={handleInputChange}
             InputLabelProps={{ shrink: true }}
+            sx={{ marginBottom: 2 }}
           />
           <TextField
-            margin="dense"
             label="End Date"
             name="endDate"
             type="date"
@@ -187,6 +229,7 @@ function SemestersPage() {
             value={semesterData.endDate}
             onChange={handleInputChange}
             InputLabelProps={{ shrink: true }}
+            sx={{ marginBottom: 2 }}
           />
         </DialogContent>
         <DialogActions>
@@ -199,7 +242,6 @@ function SemestersPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for Notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
@@ -210,7 +252,7 @@ function SemestersPage() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 }
 
