@@ -61,7 +61,7 @@ function GradesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [gradeToEdit, setGradeToEdit] = useState(null);
 
-  const token = localStorage.getItem("jwtToken");
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchSubjectsAndAssignmentsAndGrades();

@@ -50,7 +50,7 @@ function AssignmentsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [assignmentToEdit, setAssignmentToEdit] = useState(null);
 
-  const token = localStorage.getItem("jwtToken");
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchSubjectsAndAssignments();

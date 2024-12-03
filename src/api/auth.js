@@ -1,7 +1,17 @@
 import axiosInstance from './axiosInstance';
 import { handleApiError } from './errorController';
 
-// Sign in a user
+/**
+ * Sign in a user.
+ * 
+ * @async
+ * @function signIn
+ * @param {Object} credentials - The user's credentials for signing in.
+ * @param {string} credentials.email - The user's email address.
+ * @param {string} credentials.password - The user's password.
+ * @returns {Promise<Object>} The response data containing the authentication token.
+ * @throws {Error} If an error occurs while signing in.
+ */
 export const signIn = async (credentials) => {
   try {
     const response = await axiosInstance.post('/auth/signin', credentials);
@@ -19,7 +29,14 @@ export const signIn = async (credentials) => {
   }
 };
 
-// Sign out a user
+/**
+ * Sign out a user.
+ * 
+ * @async
+ * @function signOut
+ * @returns {Promise<Object>} The response data indicating the result of the sign-out operation.
+ * @throws {Error} If an error occurs while signing out.
+ */
 export const signOut = async () => {
   try {
     // Remove token from localStorage

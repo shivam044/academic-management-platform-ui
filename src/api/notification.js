@@ -56,6 +56,21 @@ export const getAllNotifications = async () => {
   }
 };
 
+// Get all notifications for a specific user by ID
+export const getNotificationsByUser = async (userId) => {
+  try {
+    const response = await axiosInstance.get(`/api/notifications/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status) {
+      handleApiError(`Error getting all notifications for the user: ${error.response.statusText}`, error);
+    } else {
+      console.error("Unexpected error occurred while fetching notifications:", error);
+    }
+    throw error; // Ensure you re-throw the error for any further handling
+  } 
+};
+
 // Mark a notification as read
 export const markNotificationAsRead = async (notificationId) => {
   try {
